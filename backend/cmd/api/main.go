@@ -15,6 +15,7 @@ import (
 	"backend/internal/infrastructure/cloudinary"
 	"backend/internal/infrastructure/config"
 	"backend/internal/infrastructure/database"
+	"backend/internal/infrastructure/email"
 	"backend/internal/infrastructure/logger"
 	"backend/internal/repository/postgres"
 	"backend/internal/usecase/auth"
@@ -62,6 +63,26 @@ func main() {
 		logger.Fatal("Failed to initialize Cloudinary service", err)
 	}
 
+	// Initialize Email service
+	var emailService email.EmailService
+	if cfg.Email.SMTPUsername != "" && cfg.Email.SMTPPassword != "" {
+		// Use real email service if credentials are provided
+		emailService = email.NewEmailService(
+			cfg.Email.SMTPHost,
+			cfg.Email.SMTPPort,
+			cfg.Email.SMTPUsername,
+			cfg.Email.SMTPPassword,
+			cfg.Email.FromEmail,
+			cfg.Email.FromName,
+			cfg.Email.FrontendURL,
+		)
+		logger.Info("Using real email service")
+	} else {
+		// Use mock email service for development
+		emailService = email.NewMockEmailService()
+		logger.Info("Using mock email service (emails will be logged to console)")
+	}
+
 	// Initialize use cases
 	jwtService := auth.NewJWTService(cfg.JWT.Secret, cfg.JWT.AccessTokenExpireMinutes, cfg.JWT.RefreshTokenExpireDays)
 	userUseCase := user.NewUserUseCase(userRepo, avatarRepo, cloudinaryServ)
@@ -69,14 +90,17 @@ func main() {
 	// Initialize OAuth service and use case
 	oauthService := auth.NewGoogleOAuthService(cfg.OAuth.GoogleClientID, cfg.OAuth.GoogleClientSecret, cfg.OAuth.GoogleRedirectURL)
 	oauthUseCase := auth.NewOAuthUseCase(userRepo, oauthService)
+	// Initialize Auth use case
+	authUseCase := auth.NewAuthUseCase(userRepo, emailService)
 
 	// Initialize handlers
 	userHandler := handler.NewUserHandler(userUseCase, jwtService, refreshTokenUseCase)
 	oauthHandler := handler.NewOAuthHandler(oauthUseCase, jwtService, refreshTokenUseCase)
+	authHandler := handler.NewAuthHandler(authUseCase, jwtService, refreshTokenUseCase)
 	authMiddleware := middleware.NewAuthMiddleware(jwtService)
 
 	// Setup router
-	r := router.NewRouter(userHandler, oauthHandler, authMiddleware)
+	r := router.NewRouter(userHandler, oauthHandler, authHandler, authMiddleware)
 	ginRouter := r.Setup()
 
 	// Create HTTP server

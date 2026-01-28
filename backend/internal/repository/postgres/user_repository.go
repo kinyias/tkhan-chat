@@ -13,15 +13,20 @@ import (
 
 // UserModel represents the GORM database model for users
 type UserModel struct {
-	ID            string `gorm:"primaryKey;type:uuid"`
-	Email         string `gorm:"uniqueIndex;not null"`
-	Password      string
-	Name          string `gorm:"not null"`
-	Phone         string
-	OAuthProvider string `gorm:"column:oauth_provider"`
-	OAuthID       string `gorm:"column:oauth_id"`
-	CreatedAt     int64  `gorm:"autoCreateTime:milli"`
-	UpdatedAt     int64  `gorm:"autoUpdateTime:milli"`
+	ID                           string `gorm:"primaryKey;type:uuid"`
+	Email                        string `gorm:"uniqueIndex;not null"`
+	Password                     string
+	Name                         string `gorm:"not null"`
+	Phone                        string
+	OAuthProvider                string `gorm:"column:oauth_provider"`
+	OAuthID                      string `gorm:"column:oauth_id"`
+	EmailVerified                bool   `gorm:"default:false"`
+	VerificationToken            string `gorm:"column:verification_token"`
+	VerificationTokenExpiresAt   int64  `gorm:"column:verification_token_expires_at"`
+	ResetPasswordToken           string `gorm:"column:reset_password_token"`
+	ResetPasswordTokenExpiresAt  int64  `gorm:"column:reset_password_token_expires_at"`
+	CreatedAt                    int64  `gorm:"autoCreateTime:milli"`
+	UpdatedAt                    int64  `gorm:"autoUpdateTime:milli"`
 }
 
 // TableName specifies the table name for UserModel
@@ -83,6 +88,30 @@ func (r *userRepository) GetByOAuthID(ctx context.Context, provider, oauthID str
 	return r.toEntity(ctx, &model), nil
 }
 
+func (r *userRepository) GetByVerificationToken(ctx context.Context, token string) (*entity.User, error) {
+	var model UserModel
+	err := r.db.WithContext(ctx).Where("verification_token = ?", token).First(&model).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, errors.ErrUserNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return r.toEntity(ctx, &model), nil
+}
+
+func (r *userRepository) GetByResetPasswordToken(ctx context.Context, token string) (*entity.User, error) {
+	var model UserModel
+	err := r.db.WithContext(ctx).Where("reset_password_token = ?", token).First(&model).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, errors.ErrUserNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return r.toEntity(ctx, &model), nil
+}
+
 func (r *userRepository) Update(ctx context.Context, user *entity.User) error {
 	model := r.toModel(user)
 	return r.db.WithContext(ctx).Save(model).Error
@@ -108,14 +137,27 @@ func (r *userRepository) List(ctx context.Context, limit, offset int) ([]*entity
 
 // toModel converts domain entity to GORM model
 func (r *userRepository) toModel(user *entity.User) *UserModel {
+	var verificationTokenExpiresAt, resetPasswordTokenExpiresAt int64
+	if !user.VerificationTokenExpiresAt.IsZero() {
+		verificationTokenExpiresAt = user.VerificationTokenExpiresAt.UnixMilli()
+	}
+	if !user.ResetPasswordTokenExpiresAt.IsZero() {
+		resetPasswordTokenExpiresAt = user.ResetPasswordTokenExpiresAt.UnixMilli()
+	}
+
 	return &UserModel{
-		ID:            user.ID,
-		Email:         user.Email,
-		Password:      user.Password,
-		Name:          user.Name,
-		Phone:         user.Phone,
-		OAuthProvider: user.OAuthProvider,
-		OAuthID:       user.OAuthID,
+		ID:                           user.ID,
+		Email:                        user.Email,
+		Password:                     user.Password,
+		Name:                         user.Name,
+		Phone:                        user.Phone,
+		OAuthProvider:                user.OAuthProvider,
+		OAuthID:                      user.OAuthID,
+		EmailVerified:                user.EmailVerified,
+		VerificationToken:            user.VerificationToken,
+		VerificationTokenExpiresAt:   verificationTokenExpiresAt,
+		ResetPasswordToken:           user.ResetPasswordToken,
+		ResetPasswordTokenExpiresAt:  resetPasswordTokenExpiresAt,
 	}
 }
 
@@ -128,16 +170,29 @@ func (r *userRepository) toEntity(ctx context.Context, model *UserModel) *entity
 		// Ignore error if avatar not found, it's optional
 	}
 
+	var verificationTokenExpiresAt, resetPasswordTokenExpiresAt time.Time
+	if model.VerificationTokenExpiresAt > 0 {
+		verificationTokenExpiresAt = time.UnixMilli(model.VerificationTokenExpiresAt)
+	}
+	if model.ResetPasswordTokenExpiresAt > 0 {
+		resetPasswordTokenExpiresAt = time.UnixMilli(model.ResetPasswordTokenExpiresAt)
+	}
+
 	return &entity.User{
-		ID:            model.ID,
-		Email:         model.Email,
-		Password:      model.Password,
-		Name:          model.Name,
-		Avatar:        avatar,
-		Phone:         model.Phone,
-		OAuthProvider: model.OAuthProvider,
-		OAuthID:       model.OAuthID,
-		CreatedAt:     time.UnixMilli(model.CreatedAt),
-		UpdatedAt:     time.UnixMilli(model.UpdatedAt),
+		ID:                           model.ID,
+		Email:                        model.Email,
+		Password:                     model.Password,
+		Name:                         model.Name,
+		Avatar:                       avatar,
+		Phone:                        model.Phone,
+		OAuthProvider:                model.OAuthProvider,
+		OAuthID:                      model.OAuthID,
+		EmailVerified:                model.EmailVerified,
+		VerificationToken:            model.VerificationToken,
+		VerificationTokenExpiresAt:   verificationTokenExpiresAt,
+		ResetPasswordToken:           model.ResetPasswordToken,
+		ResetPasswordTokenExpiresAt:  resetPasswordTokenExpiresAt,
+		CreatedAt:                    time.UnixMilli(model.CreatedAt),
+		UpdatedAt:                    time.UnixMilli(model.UpdatedAt),
 	}
 }

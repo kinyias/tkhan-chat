@@ -14,3 +14,10 @@ jwt:
   secret: 'your-secret-key-change-this-in-production'
   access_token_expire_minutes: 15 # 15 minutes
   refresh_token_expire_days: 7 # 7 days
+
+email:
+  smtp_host: 'smtp.gmail.com'
+  smtp_port: '587'
+  from_email: 'noreply@tkhanchat.com'
+  from_name: 'TkhanChat'
+  frontend_url: 'http://localhost:3000'

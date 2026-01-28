@@ -15,6 +15,7 @@ type Config struct {
 	JWT        JWTConfig
 	OAuth      OAuthConfig
 	Cloudinary CloudinaryConfig
+	Email      EmailConfig
 }
 
 // ServerConfig holds server configuration
@@ -54,6 +55,17 @@ type CloudinaryConfig struct {
 	APISecret string `mapstructure:"api_secret"`
 }
 
+// EmailConfig holds email configuration
+type EmailConfig struct {
+	SMTPHost     string `mapstructure:"smtp_host"`
+	SMTPPort     string `mapstructure:"smtp_port"`
+	SMTPUsername string `mapstructure:"smtp_username"`
+	SMTPPassword string `mapstructure:"smtp_password"`
+	FromEmail    string `mapstructure:"from_email"`
+	FromName     string `mapstructure:"from_name"`
+	FrontendURL  string `mapstructure:"frontend_url"`
+}
+
 
 // Load reads configuration from file and environment variables
 func Load() (*Config, error) {
@@ -81,6 +93,15 @@ func Load() (*Config, error) {
 	viper.BindEnv("cloudinary.cloud_name", "APP_CLOUDINARY_CLOUD_NAME")
 	viper.BindEnv("cloudinary.api_key", "APP_CLOUDINARY_API_KEY")
 	viper.BindEnv("cloudinary.api_secret", "APP_CLOUDINARY_API_SECRET")
+
+	// Bind specific environment variables for Email
+	viper.BindEnv("email.smtp_host", "APP_EMAIL_SMTP_HOST")
+	viper.BindEnv("email.smtp_port", "APP_EMAIL_SMTP_PORT")
+	viper.BindEnv("email.smtp_username", "APP_EMAIL_SMTP_USERNAME")
+	viper.BindEnv("email.smtp_password", "APP_EMAIL_SMTP_PASSWORD")
+	viper.BindEnv("email.from_email", "APP_EMAIL_FROM_EMAIL")
+	viper.BindEnv("email.from_name", "APP_EMAIL_FROM_NAME")
+	viper.BindEnv("email.frontend_url", "APP_EMAIL_FRONTEND_URL")
 
 	// Set defaults
 	viper.SetDefault("server.port", "8080")

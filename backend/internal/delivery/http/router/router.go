@@ -11,6 +11,7 @@ import (
 type Router struct {
 	userHandler    *handler.UserHandler
 	oauthHandler   *handler.OAuthHandler
+	authHandler    *handler.AuthHandler
 	authMiddleware *middleware.AuthMiddleware
 }
 
@@ -18,11 +19,13 @@ type Router struct {
 func NewRouter(
 	userHandler *handler.UserHandler,
 	oauthHandler *handler.OAuthHandler,
+	authHandler *handler.AuthHandler,
 	authMiddleware *middleware.AuthMiddleware,
 ) *Router {
 	return &Router{
 		userHandler:    userHandler,
 		oauthHandler:   oauthHandler,
+		authHandler:    authHandler,
 		authMiddleware: authMiddleware,
 	}
 }
@@ -48,9 +51,14 @@ func (r *Router) Setup() *gin.Engine {
 		// Public routes - Authentication
 		auth := v1.Group("/auth")
 		{
-			auth.POST("/register", r.userHandler.Register)
-			auth.POST("/login", r.userHandler.Login)
+			// Standard auth routes
+			auth.POST("/register", r.authHandler.Register)
+			auth.POST("/login", r.authHandler.Login)
 			auth.POST("/refresh", r.userHandler.RefreshToken)
+			auth.POST("/verify-email", r.authHandler.VerifyEmail)
+			auth.POST("/resend-verification", r.authHandler.ResendVerification)
+			auth.POST("/forgot-password", r.authHandler.ForgotPassword)
+			auth.POST("/reset-password", r.authHandler.ResetPassword)
 			
 			// Google OAuth routes
 			auth.GET("/google", r.oauthHandler.GetGoogleAuthURL)

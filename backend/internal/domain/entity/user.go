@@ -8,31 +8,41 @@ import (
 
 // User represents the user domain entity
 type User struct {
-	ID            string
-	Email         string
-	Password      string // bcrypt hashed (optional for OAuth users)
-	Name          string
-	Avatar        *Avatar // Avatar entity (optional)
-	Phone         string
-	OAuthProvider string // e.g., "google", "facebook", etc.
-	OAuthID       string // OAuth provider's user ID
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	ID                           string
+	Email                        string
+	Password                     string // bcrypt hashed (optional for OAuth users)
+	Name                         string
+	Avatar                       *Avatar // Avatar entity (optional)
+	Phone                        string
+	OAuthProvider                string // e.g., "google", "facebook", etc.
+	OAuthID                      string // OAuth provider's user ID
+	EmailVerified                bool
+	VerificationToken            string
+	VerificationTokenExpiresAt   time.Time
+	ResetPasswordToken           string
+	ResetPasswordTokenExpiresAt  time.Time
+	CreatedAt                    time.Time
+	UpdatedAt                    time.Time
 }
 
 // NewUser creates a new user entity
 func NewUser(email, password, name, phone string) *User {
 	return &User{
-		ID:            uuid.New().String(),
-		Email:         email,
-		Password:      password,
-		Name:          name,
-		Avatar:        nil,
-		Phone:         phone,
-		OAuthProvider: "",
-		OAuthID:       "",
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		ID:                           uuid.New().String(),
+		Email:                        email,
+		Password:                     password,
+		Name:                         name,
+		Avatar:                       nil,
+		Phone:                        phone,
+		OAuthProvider:                "",
+		OAuthID:                      "",
+		EmailVerified:                false,
+		VerificationToken:            "",
+		VerificationTokenExpiresAt:   time.Time{},
+		ResetPasswordToken:           "",
+		ResetPasswordTokenExpiresAt:  time.Time{},
+		CreatedAt:                    time.Now(),
+		UpdatedAt:                    time.Now(),
 	}
 }
 
@@ -52,16 +62,21 @@ func NewOAuthUser(email, name, avatarURL, provider, oauthID string) *User {
 		}
 	}
 	return &User{
-		ID:            uuid.New().String(),
-		Email:         email,
-		Password:      "", // No password for OAuth users
-		Name:          name,
-		Avatar:        avatar,
-		Phone:         "",
-		OAuthProvider: provider,
-		OAuthID:       oauthID,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		ID:                           uuid.New().String(),
+		Email:                        email,
+		Password:                     "", // No password for OAuth users
+		Name:                         name,
+		Avatar:                       avatar,
+		Phone:                        "",
+		OAuthProvider:                provider,
+		OAuthID:                      oauthID,
+		EmailVerified:                true, // OAuth users are auto-verified
+		VerificationToken:            "",
+		VerificationTokenExpiresAt:   time.Time{},
+		ResetPasswordToken:           "",
+		ResetPasswordTokenExpiresAt:  time.Time{},
+		CreatedAt:                    time.Now(),
+		UpdatedAt:                    time.Now(),
 	}
 }
 
