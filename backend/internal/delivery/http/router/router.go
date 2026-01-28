@@ -10,13 +10,19 @@ import (
 // Router manages all HTTP routes
 type Router struct {
 	userHandler    *handler.UserHandler
+	oauthHandler   *handler.OAuthHandler
 	authMiddleware *middleware.AuthMiddleware
 }
 
 // NewRouter creates a new router
-func NewRouter(userHandler *handler.UserHandler, authMiddleware *middleware.AuthMiddleware) *Router {
+func NewRouter(
+	userHandler *handler.UserHandler,
+	oauthHandler *handler.OAuthHandler,
+	authMiddleware *middleware.AuthMiddleware,
+) *Router {
 	return &Router{
 		userHandler:    userHandler,
+		oauthHandler:   oauthHandler,
 		authMiddleware: authMiddleware,
 	}
 }
@@ -45,6 +51,10 @@ func (r *Router) Setup() *gin.Engine {
 			auth.POST("/register", r.userHandler.Register)
 			auth.POST("/login", r.userHandler.Login)
 			auth.POST("/refresh", r.userHandler.RefreshToken)
+			
+			// Google OAuth routes
+			auth.GET("/google", r.oauthHandler.GetGoogleAuthURL)
+			auth.GET("/google/callback", r.oauthHandler.HandleGoogleCallback)
 		}
 
 		// Protected auth routes
@@ -68,3 +78,4 @@ func (r *Router) Setup() *gin.Engine {
 
 	return router
 }
+

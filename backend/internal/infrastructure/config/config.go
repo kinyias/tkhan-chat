@@ -13,6 +13,7 @@ type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
 	JWT      JWTConfig
+	OAuth    OAuthConfig
 }
 
 // ServerConfig holds server configuration
@@ -38,6 +39,14 @@ type JWTConfig struct {
 	RefreshTokenExpireDays   int    `mapstructure:"refresh_token_expire_days"`
 }
 
+// OAuthConfig holds OAuth configuration
+type OAuthConfig struct {
+	GoogleClientID     string `mapstructure:"google_client_id"`
+	GoogleClientSecret string `mapstructure:"google_client_secret"`
+	GoogleRedirectURL  string `mapstructure:"google_redirect_url"`
+}
+
+
 // Load reads configuration from file and environment variables
 func Load() (*Config, error) {
 	// Load .env file
@@ -54,6 +63,11 @@ func Load() (*Config, error) {
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("APP")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	// Bind specific environment variables for OAuth
+	viper.BindEnv("oauth.google_client_id", "APP_GOOGLE_CLIENT_ID")
+	viper.BindEnv("oauth.google_client_secret", "APP_GOOGLE_CLIENT_SECRET")
+	viper.BindEnv("oauth.google_redirect_url", "APP_GOOGLE_REDIRECT_URL")
 
 	// Set defaults
 	viper.SetDefault("server.port", "8080")

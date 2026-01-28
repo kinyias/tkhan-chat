@@ -54,13 +54,17 @@ func main() {
 	jwtService := auth.NewJWTService(cfg.JWT.Secret, cfg.JWT.AccessTokenExpireMinutes, cfg.JWT.RefreshTokenExpireDays)
 	userUseCase := user.NewUserUseCase(userRepo)
 	refreshTokenUseCase := auth.NewRefreshTokenUseCase(refreshTokenRepo)
+	// Initialize OAuth service and use case
+	oauthService := auth.NewGoogleOAuthService(cfg.OAuth.GoogleClientID, cfg.OAuth.GoogleClientSecret, cfg.OAuth.GoogleRedirectURL)
+	oauthUseCase := auth.NewOAuthUseCase(userRepo, oauthService)
 
 	// Initialize handlers
 	userHandler := handler.NewUserHandler(userUseCase, jwtService, refreshTokenUseCase)
+	oauthHandler := handler.NewOAuthHandler(oauthUseCase, jwtService, refreshTokenUseCase)
 	authMiddleware := middleware.NewAuthMiddleware(jwtService)
 
 	// Setup router
-	r := router.NewRouter(userHandler, authMiddleware)
+	r := router.NewRouter(userHandler, oauthHandler, authMiddleware)
 	ginRouter := r.Setup()
 
 	// Create HTTP server

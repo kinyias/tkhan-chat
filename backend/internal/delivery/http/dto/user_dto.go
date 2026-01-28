@@ -59,3 +59,16 @@ type ListUsersResponse struct {
 	Limit  int             `json:"limit"`
 	Offset int             `json:"offset"`
 }
+
+// OAuthCallbackRequest represents the OAuth callback request
+type OAuthCallbackRequest struct {
+	Code  string `json:"code" validate:"required"`
+	State string `json:"state" validate:"required"`
+}
+
+// OAuthAuthURLResponse represents the OAuth authorization URL response
+type OAuthAuthURLResponse struct {
+	AuthURL string `json:"auth_url"`
+	State   string `json:"state"`
+}
+
