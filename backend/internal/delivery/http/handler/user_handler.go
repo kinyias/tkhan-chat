@@ -215,7 +215,7 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userUseCase.Update(c.Request.Context(), userID, req.Name, req.Avatar, req.Phone)
+	user, err := h.userUseCase.Update(c.Request.Context(), userID, req.Name, req.Phone)
 	if err != nil {
 		utils.HandleDomainError(c, err)
 		return
@@ -270,17 +270,74 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	utils.SuccessResponse(c, http.StatusOK, "user deleted successfully", nil)
 }
 
+// UpdateAvatar handles avatar upload
+func (h *UserHandler) UpdateAvatar(c *gin.Context) {
+	userID := c.GetString("userID")
+
+	// Get file from request
+	file, header, err := c.Request.FormFile("avatar")
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusBadRequest, "avatar file is required", err)
+		return
+	}
+	defer file.Close()
+
+	// Validate file size (max 5MB)
+	const maxFileSize = 5 * 1024 * 1024 // 5MB
+	if header.Size > maxFileSize {
+		utils.ErrorResponse(c, http.StatusBadRequest, "file size exceeds 5MB limit", nil)
+		return
+	}
+
+	// Validate file type
+	contentType := header.Header.Get("Content-Type")
+	allowedTypes := map[string]bool{
+		"image/jpeg": true,
+		"image/jpg":  true,
+		"image/png":  true,
+		"image/gif":  true,
+		"image/webp": true,
+	}
+	if !allowedTypes[contentType] {
+		utils.ErrorResponse(c, http.StatusBadRequest, "invalid file type. Allowed: jpeg, jpg, png, gif, webp", nil)
+		return
+	}
+
+	// Update avatar
+	user, err := h.userUseCase.UpdateAvatar(c.Request.Context(), userID, file)
+	if err != nil {
+		utils.ErrorResponse(c, http.StatusInternalServerError, err.Error(), err)
+		return
+	}
+
+	utils.SuccessResponse(c, http.StatusOK, "avatar updated successfully", h.toUserResponse(user))
+}
+
 // toUserResponse converts entity to response DTO
 func (h *UserHandler) toUserResponse(user *entity.User) *dto.UserResponse {
-	return &dto.UserResponse{
+	response := &dto.UserResponse{
 		ID:        user.ID,
 		Email:     user.Email,
 		Name:      user.Name,
-		Avatar:    user.Avatar,
 		Phone:     user.Phone,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}
+
+	// Convert Avatar entity to AvatarDTO if exists
+	if user.Avatar != nil {
+		response.Avatar = &dto.AvatarDTO{
+			ID:        user.Avatar.ID,
+			UserID:    user.Avatar.UserID,
+			PublicID:  user.Avatar.PublicID,
+			PublicURL: user.Avatar.PublicURL,
+			SecureURL: user.Avatar.SecureURL,
+			CreatedAt: user.Avatar.CreatedAt,
+			UpdatedAt: user.Avatar.UpdatedAt,
+		}
+	}
+
+	return response
 }
 
 // toUserResponseList converts entity list to response DTO list

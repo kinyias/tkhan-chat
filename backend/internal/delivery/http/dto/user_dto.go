@@ -18,20 +18,30 @@ type LoginRequest struct {
 
 // UpdateUserRequest represents the user update request
 type UpdateUserRequest struct {
-	Name   string `json:"name" validate:"required"`
-	Avatar string `json:"avatar"`
-	Phone  string `json:"phone"`
+	Name  string `json:"name" validate:"required"`
+	Phone string `json:"phone"`
+}
+
+// AvatarDTO represents avatar data transfer object
+type AvatarDTO struct {
+	ID        string    `json:"id"`
+	UserID    string    `json:"user_id"`
+	PublicID  string    `json:"public_id"`
+	PublicURL string    `json:"public_url"`
+	SecureURL string    `json:"secure_url"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // UserResponse represents the user response
 type UserResponse struct {
-	ID        string    `json:"id"`
-	Email     string    `json:"email"`
-	Name      string    `json:"name"`
-	Avatar    string    `json:"avatar"`
-	Phone     string    `json:"phone"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        string     `json:"id"`
+	Email     string     `json:"email"`
+	Name      string     `json:"name"`
+	Avatar    *AvatarDTO `json:"avatar,omitempty"`
+	Phone     string     `json:"phone"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
 }
 
 // LoginResponse represents the login response with tokens

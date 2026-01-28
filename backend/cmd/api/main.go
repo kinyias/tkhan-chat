@@ -12,6 +12,7 @@ import (
 	"backend/internal/delivery/http/handler"
 	"backend/internal/delivery/http/middleware"
 	"backend/internal/delivery/http/router"
+	"backend/internal/infrastructure/cloudinary"
 	"backend/internal/infrastructure/config"
 	"backend/internal/infrastructure/database"
 	"backend/internal/infrastructure/logger"
@@ -47,12 +48,23 @@ func main() {
 	// logger.Info("Database migrations completed")
 
 	// Initialize repositories
-	userRepo := postgres.NewUserRepository(db)
+	avatarRepo := postgres.NewAvatarRepository(db)
+	userRepo := postgres.NewUserRepository(db, avatarRepo)
 	refreshTokenRepo := postgres.NewRefreshTokenRepository(db)
+
+	// Initialize Cloudinary service
+	cloudinaryServ, err := cloudinary.NewService(
+		cfg.Cloudinary.CloudName,
+		cfg.Cloudinary.APIKey,
+		cfg.Cloudinary.APISecret,
+	)
+	if err != nil {
+		logger.Fatal("Failed to initialize Cloudinary service", err)
+	}
 
 	// Initialize use cases
 	jwtService := auth.NewJWTService(cfg.JWT.Secret, cfg.JWT.AccessTokenExpireMinutes, cfg.JWT.RefreshTokenExpireDays)
-	userUseCase := user.NewUserUseCase(userRepo)
+	userUseCase := user.NewUserUseCase(userRepo, avatarRepo, cloudinaryServ)
 	refreshTokenUseCase := auth.NewRefreshTokenUseCase(refreshTokenRepo)
 	// Initialize OAuth service and use case
 	oauthService := auth.NewGoogleOAuthService(cfg.OAuth.GoogleClientID, cfg.OAuth.GoogleClientSecret, cfg.OAuth.GoogleRedirectURL)

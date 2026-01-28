@@ -10,10 +10,11 @@ import (
 
 // Config holds all configuration for the application
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	JWT      JWTConfig
-	OAuth    OAuthConfig
+	Server     ServerConfig
+	Database   DatabaseConfig
+	JWT        JWTConfig
+	OAuth      OAuthConfig
+	Cloudinary CloudinaryConfig
 }
 
 // ServerConfig holds server configuration
@@ -46,6 +47,13 @@ type OAuthConfig struct {
 	GoogleRedirectURL  string `mapstructure:"google_redirect_url"`
 }
 
+// CloudinaryConfig holds Cloudinary configuration
+type CloudinaryConfig struct {
+	CloudName string `mapstructure:"cloud_name"`
+	APIKey    string `mapstructure:"api_key"`
+	APISecret string `mapstructure:"api_secret"`
+}
+
 
 // Load reads configuration from file and environment variables
 func Load() (*Config, error) {
@@ -68,6 +76,11 @@ func Load() (*Config, error) {
 	viper.BindEnv("oauth.google_client_id", "APP_GOOGLE_CLIENT_ID")
 	viper.BindEnv("oauth.google_client_secret", "APP_GOOGLE_CLIENT_SECRET")
 	viper.BindEnv("oauth.google_redirect_url", "APP_GOOGLE_REDIRECT_URL")
+
+	// Bind specific environment variables for Cloudinary
+	viper.BindEnv("cloudinary.cloud_name", "APP_CLOUDINARY_CLOUD_NAME")
+	viper.BindEnv("cloudinary.api_key", "APP_CLOUDINARY_API_KEY")
+	viper.BindEnv("cloudinary.api_secret", "APP_CLOUDINARY_API_SECRET")
 
 	// Set defaults
 	viper.SetDefault("server.port", "8080")

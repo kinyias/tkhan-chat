@@ -12,7 +12,7 @@ type User struct {
 	Email         string
 	Password      string // bcrypt hashed (optional for OAuth users)
 	Name          string
-	Avatar        string
+	Avatar        *Avatar // Avatar entity (optional)
 	Phone         string
 	OAuthProvider string // e.g., "google", "facebook", etc.
 	OAuthID       string // OAuth provider's user ID
@@ -27,7 +27,7 @@ func NewUser(email, password, name, phone string) *User {
 		Email:         email,
 		Password:      password,
 		Name:          name,
-		Avatar:        "",
+		Avatar:        nil,
 		Phone:         phone,
 		OAuthProvider: "",
 		OAuthID:       "",
@@ -37,7 +37,20 @@ func NewUser(email, password, name, phone string) *User {
 }
 
 // NewOAuthUser creates a new OAuth user entity
-func NewOAuthUser(email, name, avatar, provider, oauthID string) *User {
+func NewOAuthUser(email, name, avatarURL, provider, oauthID string) *User {
+	var avatar *Avatar
+	if avatarURL != "" {
+		// For OAuth users, we'll create a simple avatar entity
+		// The actual Cloudinary upload will happen later if needed
+		avatar = &Avatar{
+			ID:        uuid.New().String(),
+			PublicID:  "", // OAuth avatars don't have Cloudinary public_id initially
+			PublicURL: avatarURL,
+			SecureURL: avatarURL,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+	}
 	return &User{
 		ID:            uuid.New().String(),
 		Email:         email,

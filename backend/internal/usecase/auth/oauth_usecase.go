@@ -71,9 +71,10 @@ func (uc *oauthUseCase) HandleGoogleCallback(ctx context.Context, code string) (
 		// User exists with this email, link OAuth account
 		existingUser.OAuthProvider = "google"
 		existingUser.OAuthID = userInfo.ID
-		if existingUser.Avatar == "" {
-			existingUser.Avatar = userInfo.Picture
-		}
+		// Note: We don't update avatar here to preserve user's uploaded avatar
+		// If you want to update avatar from OAuth, you would need to:
+		// 1. Create/update avatar entity
+		// 2. Save it via avatar repository
 		if err := uc.userRepo.Update(ctx, existingUser); err != nil {
 			return nil, fmt.Errorf("failed to link OAuth account: %w", err)
 		}

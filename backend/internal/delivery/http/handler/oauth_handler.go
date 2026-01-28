@@ -120,17 +120,31 @@ func (h *OAuthHandler) HandleGoogleCallback(c *gin.Context) {
 	}
 
 	// Return tokens and user info
+	userResponse := &dto.UserResponse{
+		ID:        user.ID,
+		Email:     user.Email,
+		Name:      user.Name,
+		Phone:     user.Phone,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	}
+
+	// Convert Avatar entity to AvatarDTO if exists
+	if user.Avatar != nil {
+		userResponse.Avatar = &dto.AvatarDTO{
+			ID:        user.Avatar.ID,
+			UserID:    user.Avatar.UserID,
+			PublicID:  user.Avatar.PublicID,
+			PublicURL: user.Avatar.PublicURL,
+			SecureURL: user.Avatar.SecureURL,
+			CreatedAt: user.Avatar.CreatedAt,
+			UpdatedAt: user.Avatar.UpdatedAt,
+		}
+	}
+
 	utils.SuccessResponse(c, http.StatusOK, "login successful", dto.LoginResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		User: &dto.UserResponse{
-			ID:        user.ID,
-			Email:     user.Email,
-			Name:      user.Name,
-			Avatar:    user.Avatar,
-			Phone:     user.Phone,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-		},
+		User:         userResponse,
 	})
 }

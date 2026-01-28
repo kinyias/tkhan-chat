@@ -70,6 +70,7 @@ func (r *Router) Setup() *gin.Engine {
 		{
 			users.GET("/me", r.userHandler.GetProfile)
 			users.PUT("/me", r.userHandler.UpdateProfile)
+			users.PUT("/me/avatar", r.userHandler.UpdateAvatar)
 			users.GET("/:id", r.userHandler.GetUserByID)
 			users.GET("", r.userHandler.ListUsers)
 			users.DELETE("/:id", r.userHandler.DeleteUser)

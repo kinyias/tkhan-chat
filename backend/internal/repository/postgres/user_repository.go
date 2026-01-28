@@ -17,7 +17,6 @@ type UserModel struct {
 	Email         string `gorm:"uniqueIndex;not null"`
 	Password      string
 	Name          string `gorm:"not null"`
-	Avatar        string
 	Phone         string
 	OAuthProvider string `gorm:"column:oauth_provider"`
 	OAuthID       string `gorm:"column:oauth_id"`
@@ -31,12 +30,16 @@ func (UserModel) TableName() string {
 }
 
 type userRepository struct {
-	db *gorm.DB
+	db         *gorm.DB
+	avatarRepo repository.AvatarRepository
 }
 
 // NewUserRepository creates a new user repository
-func NewUserRepository(db *gorm.DB) repository.UserRepository {
-	return &userRepository{db: db}
+func NewUserRepository(db *gorm.DB, avatarRepo repository.AvatarRepository) repository.UserRepository {
+	return &userRepository{
+		db:         db,
+		avatarRepo: avatarRepo,
+	}
 }
 
 func (r *userRepository) Create(ctx context.Context, user *entity.User) error {
@@ -53,7 +56,7 @@ func (r *userRepository) GetByID(ctx context.Context, id string) (*entity.User, 
 	if err != nil {
 		return nil, err
 	}
-	return r.toEntity(&model), nil
+	return r.toEntity(ctx, &model), nil
 }
 
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
@@ -65,7 +68,7 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*entity.
 	if err != nil {
 		return nil, err
 	}
-	return r.toEntity(&model), nil
+	return r.toEntity(ctx, &model), nil
 }
 
 func (r *userRepository) GetByOAuthID(ctx context.Context, provider, oauthID string) (*entity.User, error) {
@@ -77,7 +80,7 @@ func (r *userRepository) GetByOAuthID(ctx context.Context, provider, oauthID str
 	if err != nil {
 		return nil, err
 	}
-	return r.toEntity(&model), nil
+	return r.toEntity(ctx, &model), nil
 }
 
 func (r *userRepository) Update(ctx context.Context, user *entity.User) error {
@@ -98,7 +101,7 @@ func (r *userRepository) List(ctx context.Context, limit, offset int) ([]*entity
 
 	users := make([]*entity.User, len(models))
 	for i, model := range models {
-		users[i] = r.toEntity(&model)
+		users[i] = r.toEntity(ctx, &model)
 	}
 	return users, nil
 }
@@ -110,7 +113,6 @@ func (r *userRepository) toModel(user *entity.User) *UserModel {
 		Email:         user.Email,
 		Password:      user.Password,
 		Name:          user.Name,
-		Avatar:        user.Avatar,
 		Phone:         user.Phone,
 		OAuthProvider: user.OAuthProvider,
 		OAuthID:       user.OAuthID,
@@ -118,13 +120,20 @@ func (r *userRepository) toModel(user *entity.User) *UserModel {
 }
 
 // toEntity converts GORM model to domain entity
-func (r *userRepository) toEntity(model *UserModel) *entity.User {
+func (r *userRepository) toEntity(ctx context.Context, model *UserModel) *entity.User {
+	// Try to load avatar from avatar repository
+	var avatar *entity.Avatar
+	if r.avatarRepo != nil {
+		avatar, _ = r.avatarRepo.GetByUserID(ctx, model.ID)
+		// Ignore error if avatar not found, it's optional
+	}
+
 	return &entity.User{
 		ID:            model.ID,
 		Email:         model.Email,
 		Password:      model.Password,
 		Name:          model.Name,
-		Avatar:        model.Avatar,
+		Avatar:        avatar,
 		Phone:         model.Phone,
 		OAuthProvider: model.OAuthProvider,
 		OAuthID:       model.OAuthID,
