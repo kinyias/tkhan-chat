@@ -1,0 +1,40 @@
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: tkhanchat-postgres
+    restart: always
+    env_file:
+      - ./backend/.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+  # backend:
+  #   container_name: tkhanchat-backend
+  #   depends_on:
+  #     - postgres
+  #   env_file:
+  #     - ./backend/.env
+  #   networks:
+  #     - app_network
+
+  # frontend:
+  #   container_name: tkhanchat-frontend
+  #   depends_on:
+  #     - backend
+  #   # Note: Prod build-time env vars (NEXT_PUBLIC_...) usually need to be present at build time or runtime.
+  #   # For Next.js in Docker, runtime env vars are tricky without 'publicRuntimeConfig' or experimental features.
+  #   # We will pass them here, but for prod build they might need to be ARG in Dockerfile.
+  #   env_file:
+  #     - ./frontend/.env
+  #   networks:
+  #     - app_network
+
+volumes:
+  postgres_data:
+
+networks:
+  app_network:
+    driver: bridge

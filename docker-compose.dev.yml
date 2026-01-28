@@ -1,0 +1,29 @@
+
+
+services:
+  # backend:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile.dev
+  #   restart: on-failure
+  #   ports:
+  #     - '8080:8080'
+  #   volumes:
+  #     - ./backend:/app
+  #     - /app/tmp
+
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile.dev
+  #   restart: on-failure
+  #   ports:
+  #     - '3000:3000'
+  #   volumes:
+  #     - ./frontend:/app
+  #     - /app/node_modules
+  #     - /app/.next
+
+  postgres:
+    ports:
+      - '5432:5432'

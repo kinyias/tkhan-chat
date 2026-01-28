@@ -1,0 +1,17 @@
+# General
+.git
+.gitignore
+.env
+README.md
+
+# Node
+node_modules
+npm-debug.log
+.next
+out
+build
+
+# Go
+backend/tmp
+backend/vendor
+backend/main

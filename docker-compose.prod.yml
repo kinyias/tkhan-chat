@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    restart: always
+    ports:
+      - '8080:8080' # Optional: might not expose backend directly in prod if using reverse proxy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      # If using Next.js standalone output or similar, build arguments for public env vars might be needed:
+      # args:
+      #   NEXT_PUBLIC_API_URL: ...
+    restart: always
+    ports:
+      - '80:3000' # Expose on port 80 for production access
+
+  postgres:
+    # In production, you might not expose the DB port to the host
+    # ports:
+    #   - "5432:5432"
